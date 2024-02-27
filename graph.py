@@ -106,7 +106,7 @@ def find_first_intersection_point(x, y, angle_degrees, vector_length, grid_size)
 
 
 
-def createArray(ax, startX, startY, theta1, theta2, checkSize, thetaOne) :
+def createArray(ax, startX, startY, theta1, theta2, checkSize, thetaOne, grid_size) :
 
     if(thetaOne) :
         theta = theta1
@@ -115,7 +115,7 @@ def createArray(ax, startX, startY, theta1, theta2, checkSize, thetaOne) :
 
     
     #find next intersection point and distance to that point
-    interX, interY = find_first_intersection_point(startX, startY, theta, 2, 5)
+    interX, interY = find_first_intersection_point(startX, startY, theta, 2, grid_size)
     vectorLength = euclidean_distance((startX, startY), (interX, interY))
 
     #draw the given vector
@@ -123,40 +123,39 @@ def createArray(ax, startX, startY, theta1, theta2, checkSize, thetaOne) :
 
     #draw the next vector if it is still in the graph
     if(interX < checkSize and interY < checkSize) :
-        createArray(ax, interX, interY, theta1, theta2, checkSize, not thetaOne)
+        createArray(ax, interX, interY, theta1, theta2, checkSize, not thetaOne, grid_size)
             
 
 def main():
     # Create a graph with a checkerboard pattern
     fig, ax = draw_checkerboard(5, 5, 1)
-    plt.subplots_adjust(bottom=0.3)
+    plt.subplots_adjust(bottom=0.35)
 
-    # if len(sys.argv) != 3:
-    #     print("Usage: python script.py theta1 theta2")
-    #     sys.exit(1)
-    # Input boxes for theta1 and theta2
-    # theta1 = 0  # Initial value
-    # theta2 = 0  # Initial value
-    # theta1 = float(sys.argv[1]) + 360
-    # theta2 = float(sys.argv[2])
     # Input boxes for theta1 and theta2
     theta1_input = TextBox(plt.axes([0.25, 0.1, 0.65, 0.03]), 'Theta1 (degrees):', initial='45')
     theta2_input = TextBox(plt.axes([0.25, 0.05, 0.65, 0.03]), 'Theta2 (degrees):', initial='45')
+    gridSize_input = TextBox(plt.axes([0.25, 0.15, 0.65, 0.03]), 'Width (Boxes):', initial='5')
+    startPoint_input = TextBox(plt.axes([0.25, 0.2, 0.65, 0.03]), 'Start Point:', initial='2.5')
+
 
     # Function to update the plot when input values change
     def update(val):
         try:
             ax.clear()
-            draw_checkerboard_just_ax(5, 5, 1, ax)
+            gridSize = int(gridSize_input.text)
+            startPoint = float(startPoint_input.text)
+
+            draw_checkerboard_just_ax(gridSize, gridSize, 1, ax)
             theta1 = float(theta1_input.text)
             theta2 = float(theta2_input.text)
 
+            
             startX = 0
-            startY = 2.5
+            startY = startPoint
 
-            createArray(ax, startX, startY, theta1, theta2, 5, True)
+            createArray(ax, startX, startY, theta1, theta2, gridSize, True, gridSize)
 
-            x_grid_lines, y_grid_lines = find_first_intersection_point(0, 2.5, theta1, 2, 5)
+            x_grid_lines, y_grid_lines = find_first_intersection_point(0, 2.5, theta1, 2, gridSize)
             
             print("Intersection points with vertical grid lines:", x_grid_lines)
             print("Intersection points with horizontal grid lines:", y_grid_lines)
@@ -170,6 +169,9 @@ def main():
     # Register the update function with each input box
     theta1_input.on_submit(update)
     theta2_input.on_submit(update)
+    gridSize_input.on_submit(update)
+    startPoint_input.on_submit(update)
+
     update(45)
     plt.grid()
     plt.show()
