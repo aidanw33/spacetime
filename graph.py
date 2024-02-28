@@ -74,6 +74,11 @@ def find_first_intersection_point(x, y, angle_degrees, vector_length, grid_size)
 
     # Calculate slope of the vector
     slope = np.tan(angle_radians)
+    # print("CurrentX: ", x)
+    # print("CurrentY: ", y)
+    # print("angle_degrees", angle_degrees)
+    # print("slope: ", slope)
+
 
     # Point-slope form of the line equation: y - y1 = m * (x - x1)
     # where (x1, y1) is the starting point of the vector
@@ -85,11 +90,20 @@ def find_first_intersection_point(x, y, angle_degrees, vector_length, grid_size)
     y_intercept = line_equation(x_intercept)
 
     # Find the smallest positive intersection points along the x-axis and y-axis
-    first_x_intersection = next((x_val for x_val in x_intercept if x_val > x and line_equation(x_val) >= 0), None)
+    first_x_intersection = next((x_val for x_val in x_intercept if x_val > x), None)
+    # print("TargetX", first_x_intersection)
     first_y_intersection = next((y_val for y_val in y_intercept if y_val > y and y_val <= grid_size), None)
 
     # Find the first intersection point with horizontal grid lines
-    y_intercept_horizontal = next((y_val for y_val in np.arange(0, grid_size + 1) if y_val > y and y_val <= grid_size), None)
+    
+    if(angle_degrees < 0) :
+        y_intercept_horizontal = next((y_val for y_val in np.arange(0, grid_size + 1) if y_val >= y and y_val <= grid_size), None)    
+        y_intercept_horizontal -= 1
+    else:
+        y_intercept_horizontal = next((y_val for y_val in np.arange(0, grid_size + 1) if y_val > y and y_val <= grid_size), None)    
+
+    
+    # print("TargetY: ", y_intercept_horizontal)
 
     # Calculate the coordinates of the first intersection point
     first_y_intersection = (line_equation_y(y_intercept_horizontal), y_intercept_horizontal) if y_intercept_horizontal is not None else None
@@ -100,8 +114,10 @@ def find_first_intersection_point(x, y, angle_degrees, vector_length, grid_size)
     second_intersection_point = first_y_intersection
 
     if(euclidean_distance((x, y), (first_intersection_point)) < euclidean_distance((x, y), (second_intersection_point))) :
+        # print("point found: ", first_intersection_point)
         return first_intersection_point
     else:
+        # print("point found: ", second_intersection_point)
         return second_intersection_point
 
 
@@ -113,7 +129,7 @@ def createArray(ax, startX, startY, theta1, theta2, checkSize, thetaOne, grid_si
     else:
         theta = theta2
 
-    
+
     #find next intersection point and distance to that point
     interX, interY = find_first_intersection_point(startX, startY, theta, 2, grid_size)
     vectorLength = euclidean_distance((startX, startY), (interX, interY))
@@ -122,9 +138,10 @@ def createArray(ax, startX, startY, theta1, theta2, checkSize, thetaOne, grid_si
     add_vector_to_graph(ax, startX, startY, theta, vectorLength)
 
     #draw the next vector if it is still in the graph
-    if(interX < checkSize and interY < checkSize) :
+    if(interX < checkSize and interY < checkSize and interY >= 0 ) :
+        
         createArray(ax, interX, interY, theta1, theta2, checkSize, not thetaOne, grid_size)
-            
+        createArray(ax, interX, interY, -theta1, -theta2, checkSize, not thetaOne, grid_size)
 
 def main():
     # Create a graph with a checkerboard pattern
@@ -148,20 +165,20 @@ def main():
             draw_checkerboard_just_ax(gridSize, gridSize, 1, ax)
             theta1 = float(theta1_input.text)
             theta2 = float(theta2_input.text)
-
             
             startX = 0
             startY = startPoint
 
             createArray(ax, startX, startY, theta1, theta2, gridSize, True, gridSize)
-
+            createArray(ax, startX, startY, -theta1, -theta2, gridSize, True, gridSize)
             x_grid_lines, y_grid_lines = find_first_intersection_point(0, 2.5, theta1, 2, gridSize)
             
-            print("Intersection points with vertical grid lines:", x_grid_lines)
-            print("Intersection points with horizontal grid lines:", y_grid_lines)
+            # print("Intersection points with vertical grid lines:", x_grid_lines)
+            # print("Intersection points with horizontal grid lines:", y_grid_lines)
             
             plt.grid()
-            plt.show()
+            # plt.show()
+            print("done updating")
             # Update your existing plot with the new theta1 and theta2 values
         except ValueError:
             print("Invalid input. Please enter valid numeric values.")
