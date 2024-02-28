@@ -19,10 +19,11 @@ def draw_checkerboard(rows, cols, square_size):
     for row in range(rows):
         for col in range(cols):
             # Set all squares to white
-            color = 'white'
+            # color = 'white'
+            color = 'black'
 
             ax.add_patch(plt.Rectangle((col * square_size, row * square_size), square_size, square_size,
-                                       edgecolor='black', facecolor=color))
+                                       edgecolor='black', facecolor=color, color='#0099FF'))
 
     ax.set_xlim(0, cols * square_size)
     ax.set_ylim(0, rows * square_size)
@@ -46,7 +47,7 @@ def draw_checkerboard_just_ax(rows, cols, square_size, ax):
             color = 'white'
 
             ax.add_patch(plt.Rectangle((col * square_size, row * square_size), square_size, square_size,
-                                       edgecolor='black', facecolor=color))
+                                       edgecolor='black', facecolor=color,color='#0099FF'))
 
     ax.set_xlim(0, cols * square_size)
     ax.set_ylim(0, rows * square_size)
