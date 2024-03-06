@@ -5,12 +5,63 @@ import sys
 import math
 import matplotlib.patches as patches
 from matplotlib.widgets import Button
-import time
 
+from calculations import read_in_geometry, add_boundary, get_vector_count, set_vector_count, clear_bmxb, add_boundary, get_lines, detect_nearest_collision, euclidean_distance
 
 #GLOBAL VARIABLE
-VECTOR_COUNT = 0
 VECTOR_HASH = {}
+
+
+
+
+def draw_geometry(ax):
+
+    LINES = get_lines()
+    for line in LINES :
+        firstPoint = line[0]
+        secondPoint = line[1]
+
+        add_vector_to_graph_points(ax, firstPoint, secondPoint)
+
+
+def shoot_vector(ax, start_point, theta) :
+    
+    #find the first collision
+    collision_point, theta_reflection, recurse = detect_nearest_collision(start_point, theta)
+    
+    print(" Collsion Point: ", collision_point, "reflection_theta: ", theta_reflection, "recurse: ", recurse)
+
+    if(collision_point[0] != None and collision_point[1] != None) :
+        #draw the vector and collisionn
+        add_vector_to_graph_points(ax, start_point, collision_point)
+
+    vc = get_vector_count()    
+    set_vector_count(vc + 1)
+    if(recurse):
+        shoot_vector(ax, collision_point, theta_reflection)
+
+def add_vector_to_graph_points(ax, start_point, end_point, color='red'):
+    """
+    Add a vector to a Matplotlib axis.
+
+    Parameters:
+    - ax (matplotlib.axes._axes.Axes): The Matplotlib axis to which the vector will be added.
+    - start_point (tuple): Tuple containing the (x, y) coordinates of the starting point of the vector.
+    - end_point (tuple): Tuple containing the (x, y) coordinates of the end point of the vector.
+    - color (str, optional): The color of the vector. Default is 'red'.
+
+    Returns:
+    - None
+    """
+    x_start, y_start = start_point
+    x_end, y_end = end_point
+
+    # Calculate the components of the vector
+    x_component = x_end - x_start
+    y_component = y_end - y_start
+
+    # Plot the vector using quiver on the existing axis (ax)
+    ax.quiver(x_start, y_start, x_component, y_component, angles='xy', scale_units='xy', scale=1, color=color, width=.002, headaxislength=0, headlength=0)
 
 
 def add_vector_to_graph(ax, x, y, angle_degrees, length, color='red'):
@@ -52,10 +103,10 @@ def draw_checkerboard_just_ax(rows, cols, square_size, ax):
     for row in range(rows):
         for col in range(cols):
             # Set all squares to white
-            color = 'white' if (row + col) % 2 == 0 else '#d3d3d3'
+            color = 'white' #if (row + col) % 2 == 0 else '#d3d3d3'
             
             ax.add_patch(plt.Rectangle((col * square_size, row * square_size), square_size, square_size,
-                                       edgecolor='black', facecolor=color))
+                                       facecolor=color))#edgecolor='black'))
 
     ax.set_xlim(0, cols * square_size)
     ax.set_ylim(0, rows * square_size)
@@ -71,22 +122,7 @@ def draw_checkerboard_just_ax(rows, cols, square_size, ax):
 
     return ax
 
-def euclidean_distance(point1, point2):
-    """
-    Calculate the Euclidean distance between two points in a two-dimensional space.
 
-    Parameters:
-    - point1 (tuple): A tuple representing the coordinates (x1, y1) of the first point.
-    - point2 (tuple): A tuple representing the coordinates (x2, y2) of the second point.
-
-    Returns:
-    - float: The Euclidean distance between the two points.
-    """
-
-    x1, y1 = point1
-    x2, y2 = point2
-    distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-    return distance
 
 def find_first_intersection_point(x, y, angle_degrees, width, height):
     """
@@ -235,21 +271,25 @@ def main():
     plt.subplots_adjust(bottom=0.35)
 
     # Input boxes for theta1 and theta2
-    theta1_input = TextBox(plt.axes([0.25, 0.1, 0.65, 0.03]), 'Theta1 (degrees):', initial='45')
+    theta1_input = TextBox(plt.axes([0.25, 0.1, 0.65, 0.03]), 'Theta1 (degrees):', initial='0')
     theta2_input = TextBox(plt.axes([0.25, 0.05, 0.65, 0.03]), 'Theta2 (degrees):', initial='45')
     width_input = TextBox(plt.axes([0.25, 0.15, 0.23, 0.03]), 'Width (Boxes):', initial='5')
     height_input = TextBox(plt.axes([0.66, 0.15, 0.24, 0.03]), 'Height (Boxes):', initial='5')
-    startPoint_input = TextBox(plt.axes([0.25, 0.2, 0.65, 0.03]), 'Start Point:', initial='2.5')
+    startPoint_input = TextBox(plt.axes([0.25, 0.2, 0.65, 0.03]), 'Start Point:', initial='1.5')
     button_ax = plt.axes([0.8, 0.25, 0.15, 0.035])  # [left, bottom, width, height]
+
+    #read in the current geometry
+    read_in_geometry("traingle_pattern.txt")
 
     #Calculate button
     button = Button(button_ax, 'Calculate') 
     button.on_clicked(on_button_click)
 
     #Vector Count Display
-    global VECTOR_COUNT 
-    vectorBoxString = "Unique Vector Count: "+ str(VECTOR_COUNT)
+    vc = get_vector_count()
+    vectorBoxString = "Unique Vector Count: "+ str(vc)
     text_box = plt.text(-1 , 20, vectorBoxString, bbox=dict(facecolor='white', edgecolor='black'))
+
 
 
     # Function to update the plot when input values change
@@ -259,8 +299,8 @@ def main():
         """
 
         try:
-            global VECTOR_COUNT, VECTOR_HASH
-            VECTOR_COUNT = 0
+            global VECTOR_HASH
+            set_vector_count(0)
             VECTOR_HASH.clear()
 
             ax.clear()
@@ -277,9 +317,20 @@ def main():
             startX = 0
             startY = startPoint
 
-            createArray(ax, startX, startY, theta1, theta2, True, width, height)
-            createArray(ax, startX, startY, -theta1, -theta2, True, width, height)
-            text_box.set_text("Unique Vector Count :" + str(VECTOR_COUNT)) #str(VECTOR_COUNT))
+            #createArray(ax, startX, startY, theta1, theta2, True, width, height)
+            #createArray(ax, startX, startY, -theta1, -theta2, True, width, height)
+
+            #reset the boundary conditions
+            clear_bmxb()
+            add_boundary(width, height)
+
+            #draw the geometry
+            draw_geometry(ax)
+
+            #shoot the starting vector
+            shoot_vector(ax, (startX, startY), theta1)
+
+            text_box.set_text("Unique Vector Count :" + str(get_vector_count())) #str(VECTOR_COUNT))
             plt.grid()
             plt.show()
 
